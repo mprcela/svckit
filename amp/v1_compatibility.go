@@ -8,7 +8,7 @@ import (
 )
 
 func ParseCompatibility(buf []byte, version uint8) *Msg {
-	if version == CompatibilityVersion1 {
+	if version == CompatibilityVersion1 || version == CompatibilityVersion2 {
 		return ParseV1(buf)
 	}
 	return Parse(buf)
@@ -77,6 +77,12 @@ func (m *Msg) MarshalV1() []byte {
 	return buf
 }
 
+// Marshal packs message for sending on the wire
+func (m *Msg) MarshalV2() []byte {
+	buf, _ := m.marshal(CompressionNone, CompatibilityVersion2)
+	return buf
+}
+
 // MarshalDeflate packs and compress message
 func (m *Msg) MarshalV1Deflate() ([]byte, bool) {
 	return m.marshal(CompressionDeflate, CompatibilityVersion1)
@@ -101,8 +107,11 @@ func (m *Msg) marshalV1header() []byte {
 }
 
 func (m *Msg) MarshalCompatiblity(version uint8) []byte {
-	if version == CompatibilityVersion1 {
+	switch version {
+	case CompatibilityVersion1:
 		return m.MarshalV1()
+	case CompatibilityVersion2:
+		return m.MarshalV2()
 	}
 	return m.Marshal()
 }

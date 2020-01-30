@@ -14,8 +14,10 @@ type Sse struct {
 }
 
 func (sse *Sse) Read() ([]byte, error) {
+	fmt.Println("reading...")
 	if !sse.read {
 		sse.read = true
+		//return ioutil.ReadAll(sse.r.Body)
 		return []byte(`{"t":1,"u":[{"s":"m","n":0}]}`), nil
 	}
 	<-sse.closed

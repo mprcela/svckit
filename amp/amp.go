@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
 	"strings"
@@ -58,6 +59,7 @@ const (
 const (
 	CompatibilityVersionDefault uint8 = iota
 	CompatibilityVersion1
+	CompatibilityVersion2
 )
 
 var (
@@ -164,7 +166,7 @@ func (m *Msg) MarshalDeflate() ([]byte, bool) {
 
 // marshal encodes message into []byte
 func (m *Msg) marshal(supportedCompression, version uint8) ([]byte, bool) {
-	if version == CompatibilityVersion1 {
+	if version == CompatibilityVersion1 || version == CompatibilityVersion2 {
 		if m.UpdateType == BurstStart || m.UpdateType == BurstEnd {
 			// unsuported mesage types in this version
 			return nil, false
@@ -202,6 +204,14 @@ func (m *Msg) marshal(supportedCompression, version uint8) ([]byte, bool) {
 }
 
 func (m *Msg) payload(version uint8) []byte {
+	if version == CompatibilityVersion2 {
+		buf := bytes.NewBuffer([]byte(fmt.Sprintf("event: %s\ndata: ", "stat")))
+		if m.body != nil {
+			buf.Write(m.body)
+		}
+		buf.Write([]byte("\n\n"))
+		return buf.Bytes()
+	}
 	var header []byte
 	if version == CompatibilityVersion1 {
 		header = m.marshalV1header()

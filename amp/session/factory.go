@@ -107,6 +107,14 @@ func (s *Sessions) ServeV1(conn connection) {
 	s.wsConnections.Down()
 }
 
+func (s *Sessions) ServeV2(conn connection) {
+	s.wg.Add(1)
+	s.wsConnections.Up()
+	serve(s.cancelSig, conn, s.requester, s.broker, amp.CompatibilityVersion2)
+	s.wg.Done()
+	s.wsConnections.Down()
+}
+
 func (s *Sessions) waitDone(ctx context.Context, cancelSessions func()) {
 	<-ctx.Done()       // wait for application interupt signal
 	s.requester.Wait() // wait for clean exit of requester
